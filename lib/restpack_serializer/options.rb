@@ -61,6 +61,7 @@ module RestPack::Serializer
     end
 
     def allowed_parameters_from_params(params, serializer)
+      return {} unless serializer.serializable_parameters
       allowed_parameters = {}
       serializer.serializable_parameters.each do |key|
         allowed_parameters[key] = params[key].to_s if params[key]
