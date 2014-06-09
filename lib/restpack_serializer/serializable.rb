@@ -8,6 +8,7 @@ require_relative "serializable/resource"
 require_relative "serializable/single"
 require_relative "serializable/side_loading"
 require_relative "serializable/symbolizer"
+require_relative "serializable/sortable"
 
 module RestPack
   module Serializer
@@ -28,6 +29,7 @@ module RestPack
     include RestPack::Serializer::Filterable
     include RestPack::Serializer::Parameterizable
     include RestPack::Serializer::SideLoading
+    include RestPack::Serializer::Sortable
 
     class InvalidInclude < Exception; end
 

@@ -53,6 +53,8 @@ module MyApp
   end
 
   class Song < ActiveRecord::Base
+    default_scope -> { order(id: :asc) }
+
     belongs_to :artist
     belongs_to :album
   end

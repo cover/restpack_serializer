@@ -2,7 +2,7 @@ module RestPack::Serializer
   class Options
     attr_accessor :page, :page_size, :include, :filters, :serializer,
                   :model_class, :scope, :context, :include_links,
-                  :allowed_parameters
+                  :sorting, :allowed_parameters
 
     def initialize(serializer, params = {}, scope = nil, context = {})
       params.symbolize_keys! if params.respond_to?(:symbolize_keys!)
@@ -11,6 +11,7 @@ module RestPack::Serializer
       @page_size = RestPack::Serializer.config.page_size
       @include = []
       @filters = filters_from_params(params, serializer)
+      @sorting = sorting_from_params(params, serializer)
       @allowed_parameters = allowed_parameters_from_params(params, serializer)
       @serializer = serializer
       @model_class = serializer.model_class
@@ -44,6 +45,11 @@ module RestPack::Serializer
       @filters.sort.map {|k,v| "#{k}=#{v.join(',')}" }.join('&')
     end
 
+    def sorting_as_url_params
+      sorting_values = sorting.map { |k, v| v == :asc ? k : "-#{k}" }.join(',')
+      "sort=#{sorting_values}"
+    end
+
     def allowed_parameters_as_url_params
       @allowed_parameters.sort.map {|k,v| "#{k}=#{v}" }.join('&')
     end
@@ -58,6 +64,19 @@ module RestPack::Serializer
         end
       end
       filters
+    end
+
+    def sorting_from_params(params, serializer)
+      sort_values = params[:sort] && params[:sort].split(',')
+      return {} if sort_values.blank? || serializer.serializable_sorting_attributes.blank?
+      sorting_parameters = {}
+
+      sort_values.each do |sort_value|
+        sort_order = sort_value[0] == '-' ? :desc : :asc
+        sort_value = sort_value.gsub(/\A\-/, '').downcase.to_sym
+        sorting_parameters[sort_value] = sort_order if serializer.serializable_sorting_attributes.include?(sort_value)
+      end
+      sorting_parameters
     end
 
     def allowed_parameters_from_params(params, serializer)
