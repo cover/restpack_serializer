@@ -7,6 +7,7 @@ require_relative "serializable/parameterizable"
 require_relative "serializable/resource"
 require_relative "serializable/single"
 require_relative "serializable/side_loading"
+require_relative "serializable/symbolizer"
 
 module RestPack
   module Serializer
@@ -48,7 +49,7 @@ module RestPack
       add_custom_attributes(data)
       add_links(model, data)
 
-      data
+      Symbolizer.recursive_symbolize(data)
     end
 
     def custom_attributes
