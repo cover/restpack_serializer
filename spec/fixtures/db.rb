@@ -33,6 +33,13 @@ ActiveRecord::Schema.define(:version => 1) do
   create_table "payments", :force => true do |t|
     t.integer "amount"
     t.integer  "artist_id"
+    t.integer  "fan_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "fans", :force => true do |t|
+    t.string "name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -43,6 +50,7 @@ module MyApp
     has_many :albums
     has_many :songs
     has_many :payments
+    has_many :fans, :through => :payments
   end
 
   class Album < ActiveRecord::Base
@@ -61,5 +69,12 @@ module MyApp
 
   class Payment < ActiveRecord::Base
     belongs_to :artist
+    belongs_to :fan
+  end
+
+  class Fan < ActiveRecord::Base
+    attr_accessible :name
+    has_many :payments
+    has_many :artists, :through => :albums
   end
 end

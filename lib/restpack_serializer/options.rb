@@ -7,9 +7,9 @@ module RestPack::Serializer
     def initialize(serializer, params = {}, scope = nil, context = {})
       params.symbolize_keys! if params.respond_to?(:symbolize_keys!)
 
-      @page = 1
-      @page_size = RestPack::Serializer.config.page_size
-      @include = []
+      @page = params[:page] ? params[:page].to_i : 1
+      @page_size = params[:page_size] ? params[:page_size].to_i : RestPack::Serializer.config.page_size
+      @include = params[:include] ? params[:include].split(',').map(&:to_sym) : []
       @filters = filters_from_params(params, serializer)
       @sorting = sorting_from_params(params, serializer)
       @allowed_parameters = allowed_parameters_from_params(params, serializer)
@@ -18,19 +18,13 @@ module RestPack::Serializer
       @scope = scope || model_class.send(:all)
       @context = context
       @include_links = true
-
-      @page = params[:page].to_i if params[:page]
-      @page_size = params[:page_size].to_i if params[:page_size]
-      @include = params[:include].split(',').map(&:to_sym) if params[:include]
     end
 
     def scope_with_filters
       scope_filter = {}
+
       @filters.keys.each do |filter|
-        value = @filters[filter]
-        if value.is_a?(String)
-          value = value.split(',')
-        end
+        value = query_to_array(@filters[filter])
         scope_filter[filter] = value
       end
 
@@ -42,7 +36,7 @@ module RestPack::Serializer
     end
 
     def filters_as_url_params
-      @filters.sort.map {|k,v| "#{k}=#{v.join(',')}" }.join('&')
+      @filters.sort.map { |k,v| map_filter_ids(k,v) }.join('&')
     end
 
     def sorting_as_url_params
@@ -86,6 +80,26 @@ module RestPack::Serializer
         allowed_parameters[key] = params[key].to_s if params[key]
       end
       allowed_parameters
+    end
+
+    def map_filter_ids(key,value)
+      case value
+      when Hash
+        value.map { |k,v| map_filter_ids(k,v) }
+      else
+         "#{key}=#{value.join(',')}"
+      end
+    end
+
+    def query_to_array(value)
+      case value
+        when String
+          value.split(',')
+        when Hash
+          value.each { |k, v| value[k] = query_to_array(v) }
+        else
+          value
+      end
     end
   end
 end
